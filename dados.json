@@ -1,0 +1,16 @@
+{
+  "profissionais": [
+    {
+      "id": null,
+      "nome": "Mayckon Duarte",
+      "profissao": "Terapeuta Ocupacional"
+    },
+    {
+      "id": null,
+      "nome": "duda",
+      "profissao": "Terapeuta Ocupacional"
+    }
+  ],
+  "sessoes": [],
+  "participantes_sessoes": []
+}

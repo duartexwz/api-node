@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        /* Um CSS simples para organizar a tela */
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; background: #f2f2fe;}
+        form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+        input, button { padding: 10px; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; background: #f4f4f4; margin-bottom: 5px; border-left: 5px solid #007bff; }
+        .alert { background-color: #ffffff; display: none; width: 400px; height: 250px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3); border-radius: 10px; align-items: center; justify-content: center; padding: 20px; gap: 15px;} 
+        .alert .erro{ color: red;};
+        .alert .sucesso {color: rgba(54, 121, 54, 0.877)}
+    </style>
+</head>
+<body>
+
+    <h2>Cadastrar Profissional</h2>
+    <form id="formCadastro">
+        <input type="text" id="nome" placeholder="Nome do profissional" required>
+        <input type="text" id="profissao" placeholder="Profissão" required>
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <h2>
+        Lista de Profissionais
+    </h2>
+    <ul id="listaProfissionais"></ul>
+    <div class="alert" id="alertErro">
+    </div>
+    <script>
+        const API_URL = 'http://127.0.0.1:3000/api/profissionais';
+        const modalAlert = document.getElementById('alertErro');
+
+        function mostrarAlerta(mensagem, tipo){
+            modalAlert.textContent = mensagem;
+            modalAlert.className = `alert alert${tipo}`; //Define se é erro ou sucesso
+            modalAlert.style.display = 'flex';
+
+            setTimeout(() => {
+                modalAlert.style.display = 'none';
+            }, 5000)
+        };
+
+        async function buscarProfissional(){
+            try{
+                const resposta = await window.fetch(API_URL);
+
+                if (!resposta.ok){
+                    throw new Error(`Erro no servidor: ${resposta.status}`)
+                }
+                const lista = document.getElementById('listaProfissionais');
+                const profissionais = await resposta.json();
+
+
+                lista.innerHTML = '';
+                profissionais.forEach(p => {
+                    const item = document.createElement('li');
+                    item.textContent = `${p.nome} - ${p.profissao}`;
+
+                    lista.appendChild(item);
+                });
+            } catch(error){
+                console.error('Erro ao buscar dados da API', error);
+            }
+        }
+
+        document.getElementById('formCadastro').addEventListener('submit', async(event) => {
+            event.preventDefault();
+            const nome = document.getElementById('nome').value;
+            const profissao = document.getElementById('profissao').value;
+
+            modalAlert.style.display = 'none';
+
+            try{
+                const resposta_post = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' //Avisa a api que estamos enviando um json
+                    },
+                    body: JSON.stringify({nome, profissao}), // Transforam o texto em json
+                });
+                if (resposta_post.ok){
+                    mostrarAlerta('Profissional cadastrado com sucesso!', 'sucesso');
+                    document.getElementById('formCadastro').reset() // Reseta o formulario se o cadastro for bem sucedido
+                    buscarProfissional();
+                    
+                } else {
+                    const erroTexto = await resposta_post.text(); // Aguarda uma resposta da api caso haja Erro
+                    mostrarAlerta(erroTexto, 'erro') // Adiciona o erro ao alert;
+                }
+            } catch(error){
+                console.log('erro ao enviar dados', erro);
+                mostrarAlerta('Nao foi possivel conectar ao servidor')
+            }
+        });
+        buscarProfissional();
+
+    </script>
+</body>
+</html>

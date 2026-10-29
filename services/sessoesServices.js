@@ -16,7 +16,7 @@ export async function listarSessoes(req, res, next){
         const temFiltros = Object.keys(req.query).length > 0 
 
         if (!temFiltros){
-            return res.status(200).json(getSessoes);
+            return res.status(200).json(getSessoes.sessoes);
         }
 
         res.locals.sessoesCompartilhadas = sessoesLista; // Salva os parametros e passa para o filtro 
@@ -82,7 +82,7 @@ export async function cadastrarSessao(req, res, id){
         
         if (!createSessao.sessoes) createSessao.sessoes = [];
 
-        const conflitoHorario = createSessao.sessoes.some(s => s.id !== parseInt(id) && s.data.dia.horario === data.dia.horario ); // busca o elemento e retorna verdadeiro ou falso
+        const conflitoHorario = createSessao.sessoes.some(s => s.data.dia === data.dia && s.data.horario === data.horario); // busca o elemento e retorna verdadeiro ou falso
 
         if (conflitoHorario){
             return res.status(409).send('Já existe uma sessão cadastrada no horario solicitado.');
@@ -120,12 +120,14 @@ export async function cadastrarSessao(req, res, id){
 export async function atualizarSessao(req, res){
     try{
         const updateSessao = await lerDados();
-        const {id, nome, data, modalidade, profissional_id, vagas} = req.body;
+        const {nome, data, modalidade, profissional_id, vagas} = req.body;
+        const { id } = req.params;
 
         const index = updateSessao.sessoes.findIndex(s => s.id === parseInt(id))
+        console.log(index);
 
-        if (!index){ 
-            res.status(404).send(`Sessão não encontrada`);
+        if (index === -1){ 
+            return res.status(404).send('Sessão não encontrada');
         }
 
         const nomeSessaoFinal = nome != undefined ? nome.trim() : updateSessao.sessoes[index].nome;
@@ -135,10 +137,10 @@ export async function atualizarSessao(req, res){
             return res.status(400).send('Os campos nome, dia, horário, modalidade, profissional_id e vagas são obrigatórios')
         };
 
-        const dataExiste = updateSessao.sessoes.some(d => d.id != parseInt(id) && p.data == data);
+        const dataExiste = updateSessao.sessoes.some(d => d.id != parseInt(id) && d.data == data);
 
         if (dataExiste){
-            res.status(409).send(`Já existe uma sessão cadastrada na data solicitada.`);
+            return res.status(409).send(`Já existe uma sessão cadastrada na data solicitada.`);
         }
 
         updateSessao.sessoes[index].nome = nomeSessaoFinal;
@@ -158,10 +160,10 @@ export async function atualizarSessao(req, res){
     }
 }
 
-export async function deleteSessao(req, res, id){
+export async function deleteSessao(req, res){
     try{
         const deleteSessao = await lerDados();
-        const { id } = req.body;
+        const { id } = req.params;
 
         if (!id){
             return res.status(400).send('Parâmetros inválidos, passe todos os dados corretamente.');
@@ -173,9 +175,9 @@ export async function deleteSessao(req, res, id){
             return res.status(404).send('Sessão não encontrada.');
         }
 
-        deletesSessao.sessoes.splice(index, 1); // splice é um metodo nativo do js para remover ou substituir dados do arquivo json
+        deleteSessao.sessoes.splice(index, 1); // splice é um metodo nativo do js para remover ou substituir dados do arquivo json
 
-        await fs.writeFile(arquivo, JSON.stringify(deleteSessoes), null, 2);
+        await fs.writeFile(arquivo, JSON.stringify(deleteSessao), null, 2);
 
         return res.status(200).send('Sessão deletada com sucesso!');
 

@@ -21,17 +21,18 @@ export async function listarProfissionais(req, res, next){
 
         const profissionaisLista = getProfissionais.profissionais || [];
 
-        const temFiltros = Object.keys(req.query).lenght > 0;
+        const temFiltros = Object.keys(req.query).length > 0;
 
         if(!temFiltros){
-            return res.status(200).json(getProfissionais);
+            return res.status(200).json(getProfissionais.profissionais);
         }
 
         res.locals.profissionaisCompartilhados = profissionaisLista;
 
         return next()
     } catch(error){
-        res.status(500).send(`Erro ao listar profissionais ${error.message}`) // Retorna mensagem de erro 
+        console.log(error.message);
+        return res.status(500).send('Erro ao listar profissionais' ) // Retorna mensagem de erro 
     }
 }
 
@@ -43,38 +44,37 @@ export function filtrarProfissionais(req, res){
 
         const profissionaisFiltrados = profissionaisFilter.filter(profissionais => {
 
-            if (nome && !profissionais.nome.toLowerCase().inclues(nome.toLowerCase())){
+            if (nome && !profissionais.nome.toLowerCase().includes(nome.toLowerCase())){
                 return false;
             };
-            if (profissao && !profissionais.profissao.toLowerCase().inclues(profissao.toLowerCase())){
+            if (profissao && !profissionais.profissao.toLowerCase().includes(profissao.toLowerCase())){
                 return false;
             };
             return true;
         });
-        if(profissionaisFiltrados.lenght === 0){
+        if(profissionaisFiltrados.length === 0){
             return res.status(404).send(`Nenhum registro encontrado`);
         }
         return res.status(200).json(profissionaisFiltrados);
     } catch(error){
-        return res.status(500).send(`Erro ao realizar a busca: ${error.message}`)
+        console.log(error.message);
+        return res.status(500).send('Erro ao realizar a busca')
     }
 }
 
-export async function cadastrarProfissionais(req, res, id){
+export async function cadastrarProfissionais(req, res){
     try{
         const createProfissional = await lerDados();
 
         if(!createProfissional.profissionais) createProfissional.profissionais = [];
 
-        const { nome, profissao } = req.body; // pega os dados do corpo da requisicao
+        const { id, nome, profissao } = req.body; // pega os dados do corpo da requisicao
 
         if (!nome || !profissao){
             return res.status(400).send(`Os campos nome e profissao são obrigatórios no campo.`); // Mesagem de erro caso nome ou profissao nao estejam no body
         }
 
         // Ler os dados atuais
-
-        
         const profissionalExiste = createProfissional.profissionais.some(p => p.id !== parseInt(id) && p.nome.trim().toLowerCase() === nome.trim().toLowerCase()); // Acessa o campo de profissionais dentro do arquivo json
         if (profissionalExiste){
             return res.status(409).send('O profissional já está cadastrado nos sistema.');
@@ -100,7 +100,8 @@ export async function cadastrarProfissionais(req, res, id){
             dados: novoProfissional 
         });    
     } catch (error){
-        return res.status(500).send(`Erro ao cadastrar profissional: ${error.message}`,); // Mensagem de erro
+        console.log(error.message);
+        return res.status(500).send('Erro ao cadastrar profissional'); // Mensagem de erro
     }
 }
 
@@ -108,20 +109,21 @@ export async function cadastrarProfissionais(req, res, id){
 export async function atualizarProfissionais(req, res){
     try{
         const updateProfissional = await lerDados();
-        const { id, nome, profissao }= req.params;
+        const { id } = req.params;
+        const { nome, profissao } = req.body;
 
         const index = updateProfissional.profissionais.findIndex(p  => p.id === parseInt (id));
 
         if (index === -1){
             return res.status(404).send('Profissional não encontrado');
-        }// Retonrna -1 se nao encontrar o index
+        }// Retorna -1 se nao encontrar o index
         
 
         const nomeFinal = nome !== undefined ? nome.trim() : updateProfissional.profissionais[index].nome;
         const profissaoFinal = profissao !== undefined ? profissao.trim() : updateProfissional.profissionais[index].profissao;
         
         if (!nomeFinal || !profissaoFinal) {
-            return res.status(400).send(`Os campos nome e profissao são obrigatórios no corpo da requisição.`);
+            return res.status(400).send('Os campos nome e profissao são obrigatórios no corpo da requisição.');
         }
         
         const profissionalExiste = updateProfissional.profissionais.some(p => p.id !== parseInt(id) && p.nome.trim().toLowerCase() === nomeFinal.toLowerCase()); // Verifica se existe outro profissional com o nome cadastrado
@@ -140,7 +142,8 @@ export async function atualizarProfissionais(req, res){
         });
         
     } catch (error){
-            return res.status(500).send(`Erro ao conectar com a api erro: ${error.message}`);
+            console.log(error.message);
+            return res.status(500).send('Erro ao atualizar o profissional');
         }
 } 
 
@@ -165,7 +168,8 @@ export async function deleteProfissionais(req, res){
 
         return res.status(200).json({ message: 'Profissional excluído com sucesso!'});
     } catch (error){
-        res.status(500).send(`Erro ao conectar com a api: ${error.message}`);
+        console.log(error.message);
+        return res.status(500).send('Erro ao atualizar o profissional');
     }
 }
 

@@ -1,9 +1,14 @@
 {
   "profissionais": [
     {
-      "id": 1,
-      "nome": "Usuario Teste 2",
-      "profissao": "Terapia Ocupacional"
+      "id": 3,
+      "nome": "Usuario teste 4",
+      "profissao": "Fisioterapia"
+    },
+    {
+      "id": 4,
+      "nome": "Mayckon Kennedy Santos Carvalho Duarte",
+      "profissao": "Fisoterapia"
     }
   ],
   "sessoes": [
@@ -24,6 +29,17 @@
       "modalidade": "Saude da mulher",
       "data": {
         "dia": "18/10/2026",
+        "horario": "10:30"
+      },
+      "profissional_id": 1,
+      "vagas": 10
+    },
+    {
+      "id": 3,
+      "nome": "Sessao teste 1793296419749",
+      "modalidade": "Saude da mulher",
+      "data": {
+        "dia": "20/11/2050",
         "horario": "10:30"
       },
       "profissional_id": 1,

@@ -15,38 +15,73 @@ export async function lerDados(){
     }
 }
 
-export async function listarProfissionais(req, res){
+export async function listarProfissionais(req, res, next){
     try{
-        const profissionaisJson = await lerDados(); // chama o a função de leitura;
+        const getProfissionais = await lerDados(); // chama o a função de leitura;
 
-        return res.status(200).json(profissionaisJson.profissionais) // Retorna o status da requisicao
+        const profissionaisLista = getProfissionais.profissionais || [];
+
+        const temFiltros = Object.keys(req.query).lenght > 0;
+
+        if(!temFiltros){
+            return res.status(200).json(getProfissionais);
+        }
+
+        res.locals.profissionaisCompartilhados = profissionaisLista;
+
+        return next()
     } catch(error){
         res.status(500).send(`Erro ao listar profissionais ${error.message}`) // Retorna mensagem de erro 
     }
 }
 
+export function filtrarProfissionais(req, res){
+    try{
+        const profissionaisFilter = res.locals.profissionaisCompartilhados || [];
+
+        const { nome, profissao } = req.query;
+
+        const profissionaisFiltrados = profissionaisFilter.filter(profissionais => {
+
+            if (nome && !profissionais.nome.toLowerCase().inclues(nome.toLowerCase())){
+                return false;
+            };
+            if (profissao && !profissionais.profissao.toLowerCase().inclues(profissao.toLowerCase())){
+                return false;
+            };
+            return true;
+        });
+        if(profissionaisFiltrados.lenght === 0){
+            return res.status(404).send(`Nenhum registro encontrado`);
+        }
+        return res.status(200).json(profissionaisFiltrados);
+    } catch(error){
+        return res.status(500).send(`Erro ao realizar a busca: ${error.message}`)
+    }
+}
+
 export async function cadastrarProfissionais(req, res, id){
     try{
-        const { nome, profissao } = req.body; // pega os dados do corpo da requisicao
+        const createProfissional = await lerDados();
 
+        if(!createProfissional.profissionais) createProfissional.profissionais = [];
+
+        const { nome, profissao } = req.body; // pega os dados do corpo da requisicao
 
         if (!nome || !profissao){
             return res.status(400).send(`Os campos nome e profissao são obrigatórios no campo.`); // Mesagem de erro caso nome ou profissao nao estejam no body
         }
 
         // Ler os dados atuais
-        const profissionaisJson = await lerDados();
-
-        if(!profissionaisJson.profissionais) profissionaisJson.profissionais = [];
 
         
-        const profissionalExiste = profissionaisJson.profissionais.some(p => p.id !== parseInt(id) && p.nome.trim().toLowerCase() === nome.trim().toLowerCase()); // Acessa o campo de profissionais dentro do arquivo json
+        const profissionalExiste = createProfissional.profissionais.some(p => p.id !== parseInt(id) && p.nome.trim().toLowerCase() === nome.trim().toLowerCase()); // Acessa o campo de profissionais dentro do arquivo json
         if (profissionalExiste){
             return res.status(409).send('O profissional já está cadastrado nos sistema.');
         }
         
-        const ultimoId = profissionaisJson.profissionais.length > 0
-        ? profissionaisJson.profissionais[profissionaisJson.profissionais.length - 1].id
+        const ultimoId = createProfissional.profissionais.length > 0
+        ? createProfissional.profissionais[createProfissional.profissionais.length - 1].id
         : 0;
         
         const novoProfissional = {
@@ -55,9 +90,9 @@ export async function cadastrarProfissionais(req, res, id){
             profissao: profissao.trim()
         };
         // Adiciona o array na memoria
-        profissionaisJson.profissionais.push(novoProfissional);
+        createProfissional.profissionais.push(novoProfissional);
         
-        const dadosAtualizados = JSON.stringify(profissionaisJson, null, 2); // Adicionam os dados com identacao
+        const dadosAtualizados = JSON.stringify(createProfissional, null, 2); // Adicionam os dados com identacao
         await fs.writeFile(arquivo, dadosAtualizados, 'utf-8'); // Sobrescreve o arquivo
 
         return res.status(201).json({ 
@@ -71,38 +106,37 @@ export async function cadastrarProfissionais(req, res, id){
 
 
 export async function atualizarProfissionais(req, res){
-    const profissionaisJson = await lerDados();
     try{
-        const { id }= req.params;
-        const { nome } = req.body;
-        const { profissao } = req.body;
-        const index = profissionaisJson.profissionais.findIndex(p  => p.id === parseInt (id));
+        const updateProfissional = await lerDados();
+        const { id, nome, profissao }= req.params;
+
+        const index = updateProfissional.profissionais.findIndex(p  => p.id === parseInt (id));
 
         if (index === -1){
             return res.status(404).send('Profissional não encontrado');
         }// Retonrna -1 se nao encontrar o index
         
 
-        const nomeFinal = nome !== undefined ? nome.trim() : profissionaisJson.profissionais[index].nome;
-        const profissaoFinal = profissao !== undefined ? profissao.trim() : profissionaisJson.profissionais[index].profissao;
+        const nomeFinal = nome !== undefined ? nome.trim() : updateProfissional.profissionais[index].nome;
+        const profissaoFinal = profissao !== undefined ? profissao.trim() : updateProfissional.profissionais[index].profissao;
         
         if (!nomeFinal || !profissaoFinal) {
             return res.status(400).send(`Os campos nome e profissao são obrigatórios no corpo da requisição.`);
         }
         
-        const profissionalExiste = profissionaisJson.profissionais.some(p => p.id !== parseInt(id) && p.nome.trim().toLowerCase() === nomeFinal.toLowerCase()); // Verifica se existe outro profissional com o nome cadastrado
+        const profissionalExiste = updateProfissional.profissionais.some(p => p.id !== parseInt(id) && p.nome.trim().toLowerCase() === nomeFinal.toLowerCase()); // Verifica se existe outro profissional com o nome cadastrado
     
         if (profissionalExiste){
             return res.status(400).send('Ja existe um profissional com esse nome.');
         }
-        profissionaisJson.profissionais[index].nome = nomeFinal;
-        profissionaisJson.profissionais[index].profissao = profissaoFinal;
+        updateProfissional.profissionais[index].nome = nomeFinal;
+        updateProfissional.profissionais[index].profissao = profissaoFinal;
 
-        await fs.writeFile(arquivo, JSON.stringify(profissionaisJson), null, 2);
+        await fs.writeFile(arquivo, JSON.stringify(updateProfissional), null, 2);
 
         return res.status(200).json({
             message: 'Profissional atualizado com sucesso',
-            dados: profissionaisJson.profissionais[index]
+            dados: updateProfissional.profissionais[index]
         });
         
     } catch (error){
@@ -112,17 +146,22 @@ export async function atualizarProfissionais(req, res){
 
 export async function deleteProfissionais(req, res){
     try{
-        const profissionaisJson = await lerDados();
+        const deleteProfissional = await lerDados();
 
-        if (!profissionaisJson){
-            return res.status(404).send(`Erro ao encontrar o arquivo ${profissionaisJson}`);
+        if (!deleteProfissional){
+            return res.status(404).send(`Erro ao encontrar o arquivo ${deleteProfissional}`);
         }
         const { id } = req.params;
 
-        const index = profissionaisJson.profissionais.findIndex(profissionais => profissionais.id === parseInt(id));
-        profissionaisJson.profissionais.splice(index, 1) // Remove o profissional 
+        const index = deleteProfissional.profissionais.findIndex(profissionais => profissionais.id === parseInt(id));
+        if (index === -1){
+            return res.status(404).send('Profissional não encontrado');
+        }// Retonrna -1 se nao encontrar o index
+        
 
-        await fs.writeFile(arquivo, JSON.stringify(profissionaisJson, null, 2));
+        deleteProfissional.profissionais.splice(index, 1) // Remove o profissional 
+
+        await fs.writeFile(arquivo, JSON.stringify(deleteProfissional, null, 2));
 
         return res.status(200).json({ message: 'Profissional excluído com sucesso!'});
     } catch (error){

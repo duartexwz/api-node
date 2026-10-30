@@ -124,7 +124,6 @@ export async function atualizarSessao(req, res){
         const { id } = req.params;
 
         const index = updateSessao.sessoes.findIndex(s => s.id === parseInt(id))
-        console.log(index);
 
         if (index === -1){ 
             return res.status(404).send('Sessão não encontrada');

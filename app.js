@@ -16,13 +16,4 @@ app.use(express.json());
 
 app.use('/api/v1', profissionaisRouter, sessoesRouter, participantesSessaoRouter);
 
-console.log('==== ROTAS REGISTRADAS === ');
-app._router.stack.forEach(function(r){
-    if (r.route && r.route.path){
-        console.log(`Rota encontrada: ${r.route.path}`)
-    } else if (r.name == 'router'){
-        console.log('Router montado (prefixo de rota)')
-    }
-})
-console.log('========================')
 export { app }

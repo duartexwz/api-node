@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/participantes/buscar', listarParticipantes, filtrarParticipantes);
 router.post('/participantes', cadastrarParticipanteSessao);
-router.put('/participantes/:id', atualizarParticipanteSessao);
-router.delete('/participantes/:id', deleteParticipanteSessoes);
+router.put('/participantes/atualizar/:id', atualizarParticipanteSessao);
+router.delete('/participantes/deletar/:id', deleteParticipanteSessoes);
 
 export { router as participantesSessaoRouter };

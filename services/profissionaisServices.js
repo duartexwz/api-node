@@ -31,7 +31,7 @@ export async function listarProfissionais(req, res, next){
 
         return next()
     } catch(error){
-        console.log(error.message);
+        console.log(error.message)
         return res.status(500).send('Erro ao listar profissionais' ) // Retorna mensagem de erro 
     }
 }
@@ -57,18 +57,18 @@ export function filtrarProfissionais(req, res){
         }
         return res.status(200).json(profissionaisFiltrados);
     } catch(error){
-        console.log(error.message);
+        console.log(error.message)
         return res.status(500).send('Erro ao realizar a busca')
     }
 }
 
-export async function cadastrarProfissionais(req, res){
+export async function cadastrarProfissionais(req, res, id){
     try{
         const createProfissional = await lerDados();
 
         if(!createProfissional.profissionais) createProfissional.profissionais = [];
 
-        const { id, nome, profissao } = req.body; // pega os dados do corpo da requisicao
+        const { nome, profissao } = req.body; // pega os dados do corpo da requisicao
 
         if (!nome || !profissao){
             return res.status(400).send(`Os campos nome e profissao são obrigatórios no campo.`); // Mesagem de erro caso nome ou profissao nao estejam no body
@@ -100,7 +100,7 @@ export async function cadastrarProfissionais(req, res){
             dados: novoProfissional 
         });    
     } catch (error){
-        console.log(error.message);
+        console.log(error.message)
         return res.status(500).send('Erro ao cadastrar profissional'); // Mensagem de erro
     }
 }
@@ -142,7 +142,7 @@ export async function atualizarProfissionais(req, res){
         });
         
     } catch (error){
-            console.log(error.message);
+            console.log(error.message)
             return res.status(500).send('Erro ao atualizar o profissional');
         }
 } 
@@ -168,7 +168,7 @@ export async function deleteProfissionais(req, res){
 
         return res.status(200).json({ message: 'Profissional excluído com sucesso!'});
     } catch (error){
-        console.log(error.message);
+        console.log(error.message)
         return res.status(500).send('Erro ao atualizar o profissional');
     }
 }
